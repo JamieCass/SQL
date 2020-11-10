@@ -12,8 +12,8 @@ FROM (SELECT DATE_TRUNC('day', occurred_at) AS day,
 	     	 COUNT(*) AS event_count
 	  FROM web_events
 	  GROUP BY 1,2) AS sub 
-  GROUP BY 1
- ORDER BY 2 DESC;
+GROUP BY 1
+ORDER BY 2 DESC;
 
 
 -------------------- QUIZ 1 --------------------
@@ -21,8 +21,8 @@ FROM (SELECT DATE_TRUNC('day', occurred_at) AS day,
 SELECT DATE_TRUNC('day', occurred_at) AS day,
 	   channel,
        COUNT(*) AS event_count
-  FROM web_events
-  GROUP BY 1,2;
+FROM web_events
+GROUP BY 1,2;
 
 
 -------------------- QUIZ 2 --------------------
@@ -33,19 +33,19 @@ FROM (SELECT DATE_TRUNC('day', occurred_at) AS day,
        	 	 COUNT(*) AS event_count
 	  FROM web_events
       GROUP BY 1,2
-     ORDER BY 3 DESC) AS sub;
+      ORDER BY 3 DESC) AS sub;
 
 -------------------- QUIZ 3 --------------------
 -- now find the average number of events for each channel, since we broke out by day earleir, this is giving you an average per day
 SELECT channel,
 	   AVG(event_count) as avg_event_count
-  FROM (SELECT channel,
+FROM (SELECT channel,
 	  	 	 DATE_TRUNC('day',occurred_at) AS day,
        		 COUNT(*) AS event_count
 	  FROM web_events
 	  GROUP BY 1,2) AS sub
-  GROUP BY 1
- ORDER BY 2 DESC;
+GROUP BY 1
+ORDER BY 2 DESC;
 
 
 ------ IMPORTANT NOTE ------
@@ -61,7 +61,7 @@ SELECT *
   WHERE DATE_TRUNC('month', occurred_at) =
   (SELECT DATE_TRUNC('month', MIN(occurred_at)) AS min_month
     FROM orders) 
- ORDER BY occurred_at;
+ORDER BY occurred_at;
 
 -- first query wrote we created a tbale that we could then query again
 -- if you are only returning a single value, you might use that value in a logic statments like WHERE, HAVING or SELECT - the value could be nested in a CASE statement
@@ -74,7 +74,7 @@ SELECT *
 -------------------- QUIZ 1 --------------------
 -- use DATE_TRUNC to pull month level information about the first order ever placed in the orders table
 SELECT DATE_TRUNC('month', MIN(occurred_at)) AS min_month
-  FROM orders;
+FROM orders;
 
 
 -------------------- QUIZ 2 --------------------
@@ -83,14 +83,127 @@ SELECT DATE_TRUNC('month', MIN(occurred_at)) AS min_month
 SELECT AVG(standard_qty) AS standard_avg,
 	   AVG(gloss_qty) AS gloss_avg,
 	   AVG(poster_qty) AS poster_avg
-  FROM orders
-  WHERE DATE_TRUNC('month',occurred_at) = 
-  (SELECT DATE_TRUNC('month', MIN(occurred_at)) AS min_month
-    FROM orders);
+FROM orders
+WHERE DATE_TRUNC('month',occurred_at) = 
+(SELECT DATE_TRUNC('month', MIN(occurred_at)) AS min_month
+FROM orders);
 
 ----- NEW QUESTIONS -----
+-- all queries should have a subquery or subqueries, not by finding the solution and copying the output
 -------------------- QUIZ 1 --------------------
--- provide the name of the sales_rep in each region
+-- provide the name of the sales_rep in each region with the largest total_amt_sales
+SELECT t3.rep_name, t3.region, t3.total_usd
+FROM (
+	SELECT region, MAX(total_usd) AS total_usd
+	FROM (
+		SELECT s.name AS rep_name, r.name AS region, SUM(total_amt_usd) AS total_usd
+		FROM orders o 
+		JOIN accounts a 
+		ON a.id = o.account_id
+		JOIN sales_reps s 
+		ON s.id = a.sales_rep_id 
+		JOIN region r 
+		ON r.id = s.region_id
+		GROUP BY 1,2) AS t1
+	GROUP BY 1) AS t2
+JOIN (
+	SELECT s.name AS rep_name, r.name AS region, SUM(total_amt_usd) AS total_usd
+	FROM orders o 
+	JOIN accounts a 
+	ON a.id = o.account_id
+	JOIN sales_reps s 
+	ON s.id = a.sales_rep_id 
+	JOIN region r 
+	ON r.id = s.region_id
+	GROUP BY 1,2
+	ORDER BY 3 DESC) AS t3
+ON t3.region = t2.region AND t3.total_usd = t2.total_usd;
+
+
+-------------------- QUIZ 2 --------------------
+-- for the reqion with the largest(sum) of sales total_amt_usd, how many total(count) orders were placed?
+SELECT r.name region, COUNT(o.total) total_orders
+FROM orders o 
+JOIN accounts a 
+ON a.id = o.account_id
+JOIN sales_reps s 
+ON s.id = a.sales_rep_id
+JOIN region r 
+ON r.id = s.region_id
+GROUP BY 1 
+HAVING SUM(o.total_amt_usd) = (
+	SELECT MAX(total_usd)
+	FROM (
+	SELECT r.name region, SUM(o.total_amt_usd) total_usd
+	FROM orders o 
+	JOIN accounts a 
+	ON a.id = o.account_id
+	JOIN sales_reps s 
+	ON s.id = a.sales_rep_id
+	JOIN region r 
+	ON r.id = s.region_id
+	GROUP BY 1 
+	ORDER BY 2 DESC) AS t1);
+
+
+-------------------- QUIZ 3 --------------------
+-- how many accounts had more total purchases than the account name which has bought the most standard_qty throughout their lifetime?
+SELECT COUNT(*)
+FROM (
+	SELECT a.name
+	FROM orders o
+	JOIN accounts a
+	ON a.id = o.account_id
+	GROUP BY 1
+	HAVING SUM(o.total) > 
+		(SELECT total 
+	     FROM (SELECT a.name act_name, SUM(o.standard_qty) tot_std, SUM(o.total) total
+	           FROM accounts a
+	           JOIN orders o
+	           ON o.account_id = a.id
+	           GROUP BY 1
+	           ORDER BY 2 DESC
+	           LIMIT 1) t1)) t2;
+
+
+
+SELECT 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
