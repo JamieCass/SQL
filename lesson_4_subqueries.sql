@@ -150,54 +150,113 @@ HAVING SUM(o.total_amt_usd) = (
 -- how many accounts had more total purchases than the account name which has bought the most standard_qty throughout their lifetime?
 SELECT COUNT(*)
 FROM (
-	SELECT a.name
+	SELECT a.name 
 	FROM orders o
-	JOIN accounts a
+	JOIN accounts a 
 	ON a.id = o.account_id
 	GROUP BY 1
-	HAVING SUM(o.total) > 
-		(SELECT total 
-	     FROM (SELECT a.name act_name, SUM(o.standard_qty) tot_std, SUM(o.total) total
-	           FROM accounts a
-	           JOIN orders o
-	           ON o.account_id = a.id
-	           GROUP BY 1
-	           ORDER BY 2 DESC
-	           LIMIT 1) t1)) t2;
+	HAVING SUM(o.total) > (
+		SELECT total_all
+		FROM (
+			SELECT a.name acc_name, SUM(o.standard_qty) standard_qty, SUM(o.total) total_all
+			FROM orders o
+			JOIN accounts a 
+			ON a.id = o.account_id
+			GROUP BY 1
+			ORDER BY 2 DESC
+			LIMIT 1) AS t1)) AS t2;
 
 
+-------------------- QUIZ 4 --------------------
+-- for the customer that spent the most (total over lifetime as customer) total_amt_usd,
+-- how many web_events did the have for each channel
+SELECT COUNT(*), t2.web_channel
+FROM (
+	SELECT a.name acc_name, w.occurred_at web, w.channel web_channel
+	FROM accounts a 
+	JOIN web_events w 
+	ON w.account_id = a.id 
+	GROUP BY 1,2,3
+	HAVING a.name = (
+		SELECT acc_name 
+		FROM (
+			SELECT SUM(o.total_amt_usd) total_usd, a.name acc_name, w.channel web_channel
+			FROM orders o
+			JOIN accounts a 
+			ON a.id = o.account_id
+			JOIN web_events w 
+			ON w.account_id = a.id 
+			GROUP BY 2,3
+			ORDER BY 1 DESC
+			LIMIT 1) AS t1)) AS t2
+GROUP BY 2;
 
-SELECT 
+----- OR -----
+
+SELECT a.name, w.channel, COUNT(*)
+FROM accounts a
+JOIN web_events w
+ON a.id = w.account_id AND a.id =  (SELECT id
+                     FROM (SELECT a.id, a.name, SUM(o.total_amt_usd) tot_spent
+                           FROM orders o
+                           JOIN accounts a
+                           ON a.id = o.account_id
+                           GROUP BY a.id, a.name
+                           ORDER BY 3 DESC
+                           LIMIT 1) inner_table)
+GROUP BY 1, 2
+ORDER BY 3 DESC;
+
+-------------------- QUIZ 5 --------------------
+-- what is the lifetime avg amount spent (total_amt_usd) for the top 10 spending accounts?
+SELECT AVG(total_usd)
+FROM (
+	SELECT a.name acc_name, SUM(o.total_amt_usd) total_usd
+	FROM orders o
+	JOIN accounts a 
+	ON a.id = o.account_id
+	GROUP BY 1
+	ORDER BY 2 DESC
+	LIMIT 10) AS t1;
 
 
+-------------------- QUIZ 6 --------------------
+-- what is the lifetime avg amount spent (total_amt_usd), 
+--including only the companies that spent on average more per order than the average of all orders
+
+-- avg per order per company
+SELECT a.name acc_name, AVG(o.total_amt_usd) avg_company
+FROM orders o 
+JOIN accounts a 
+ON a.id = o.account_id
+GROUP BY 1
+
+-- avg for all orders 
+SELECT AVG(o.total_amt_usd) avg_all_orders
+FROM orders o 
 
 
+-- select companies that only spend more per order than avg of all orders
+SELECT a.name acc_name, AVG(o.total_amt_usd) avg_company
+FROM orders o 
+JOIN accounts a 
+ON a.id = o.account_id
+GROUP BY 1
+HAVING AVG(o.total_amt_usd) > (
+	SELECT AVG(o.total_amt_usd) avg_all_orders
+	FROM orders o)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-- select the avg for all the average spent per order for the companies in the table above
+SELECT AVG(avg_company) 
+FROM (
+	SELECT a.name acc_name, AVG(o.total_amt_usd) avg_company
+	FROM orders o 
+	JOIN accounts a 
+	ON a.id = o.account_id
+	GROUP BY 1
+	HAVING AVG(o.total_amt_usd) > (
+		SELECT AVG(o.total_amt_usd) avg_all_orders
+		FROM orders o));
 
 
 
