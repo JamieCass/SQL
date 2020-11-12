@@ -15,7 +15,7 @@ FROM (SELECT DATE_TRUNC('day', occurred_at) AS day,
 GROUP BY 1
 ORDER BY 2 DESC;
 
-
+				   ---------- QUIZ TIME ----------
 -------------------- QUIZ 1 --------------------
 -- find the number of events that occur for each day for each channel
 SELECT DATE_TRUNC('day', occurred_at) AS day,
@@ -70,7 +70,7 @@ ORDER BY occurred_at;
 -- also if we returned an entire column in the last query, IN would need to be used to perform logical argument
 -- if returning an entire table, ALIAS must be used for the table
 
-
+				   ---------- QUIZ TIME ----------
 -------------------- QUIZ 1 --------------------
 -- use DATE_TRUNC to pull month level information about the first order ever placed in the orders table
 SELECT DATE_TRUNC('month', MIN(occurred_at)) AS min_month
@@ -88,7 +88,7 @@ WHERE DATE_TRUNC('month',occurred_at) =
 (SELECT DATE_TRUNC('month', MIN(occurred_at)) AS min_month
 FROM orders);
 
------ NEW QUESTIONS -----
+				   ---------- QUIZ TIME ----------
 -- all queries should have a subquery or subqueries, not by finding the solution and copying the output
 -------------------- QUIZ 1 --------------------
 -- provide the name of the sales_rep in each region with the largest total_amt_sales
@@ -261,14 +261,75 @@ FROM (
 
 
 
+-------------------- WITH --------------------
+-- WITH statement is ofetn calles a Common TAble Expression CTE
+-- they serve the exact same purpose as subqueries
+-- they are more common in practice, as they tend to be cleaner for a future reader
+
+----- SUBQUERY E.G. -----
+SELECT channel, AVG(events) AS average_events
+FROM (SELECT DATE_TRUNC('day',occurred_at) AS day,
+             channel, COUNT(*) as events
+      FROM web_events 
+      GROUP BY 1,2) sub
+GROUP BY channel
+ORDER BY 2 DESC;
+
+
+----- WITH E.G. -----
+
+-- first part
+SELECT DATE_TRUNC('day',occurred_at) AS day, 
+       channel, COUNT(*) as events
+FROM web_events 
+GROUP BY 1,2
+
+-- instead of using a subquery we put in the WITH statement (aliasing the table as events)
+WITH events AS (
+          SELECT DATE_TRUNC('day',occurred_at) AS day, 
+                        channel, COUNT(*) as events
+          FROM web_events 
+          GROUP BY 1,2)
+
+
+-- now we use the new events table as if it is any other table in our database
+WITH events AS (
+          SELECT DATE_TRUNC('day',occurred_at) AS day, 
+                        channel, COUNT(*) as events
+          FROM web_events 
+          GROUP BY 1,2)
+
+SELECT channel, AVG(events) AS average_events
+FROM events
+GROUP BY channel
+ORDER BY 2 DESC;
 
 
 
+-- E.G. 
+--the above example didnt need more than 1 table, imagine we needed to create a second tabe to pull from
+-- we can create an additional table the following way
+WITH table1 AS (
+          SELECT *
+          FROM web_events),
+
+     table2 AS (
+          SELECT *
+          FROM accounts)
+
+SELECT *
+FROM table1
+JOIN table2
+ON table1.account_id = table2.id;
+
+-- you can add more and more tables using the WITH statement in the same way
 
 
 
+				   ---------- QUIZ TIME ----------
 
-
+-- same as the 6 questions above but using a WITH statement instead of using a subquery
+-------------------- QUIZ 1 --------------------
 
 
 
