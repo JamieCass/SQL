@@ -3,7 +3,6 @@
 -- sometimes the question we need answering doesnt have an answer when working directly with an existing table
 -- its always good to break down subqueires
 
-
 -- E.G.
 SELECT channel,
 	   AVG(event_count) AS avg_event_count
@@ -15,7 +14,10 @@ FROM (SELECT DATE_TRUNC('day', occurred_at) AS day,
 GROUP BY 1
 ORDER BY 2 DESC;
 
+
 				   ---------- QUIZ TIME ----------
+
+
 -------------------- QUIZ 1 --------------------
 -- find the number of events that occur for each day for each channel
 SELECT DATE_TRUNC('day', occurred_at) AS day,
@@ -70,7 +72,11 @@ ORDER BY occurred_at;
 -- also if we returned an entire column in the last query, IN would need to be used to perform logical argument
 -- if returning an entire table, ALIAS must be used for the table
 
+
+
 				   ---------- QUIZ TIME ----------
+
+
 -------------------- QUIZ 1 --------------------
 -- use DATE_TRUNC to pull month level information about the first order ever placed in the orders table
 SELECT DATE_TRUNC('month', MIN(occurred_at)) AS min_month
@@ -88,7 +94,11 @@ WHERE DATE_TRUNC('month',occurred_at) =
 (SELECT DATE_TRUNC('month', MIN(occurred_at)) AS min_month
 FROM orders);
 
+
+
 				   ---------- QUIZ TIME ----------
+
+
 -- all queries should have a subquery or subqueries, not by finding the solution and copying the output
 -------------------- QUIZ 1 --------------------
 -- provide the name of the sales_rep in each region with the largest total_amt_sales
@@ -328,8 +338,144 @@ ON table1.account_id = table2.id;
 
 				   ---------- QUIZ TIME ----------
 
+
 -- same as the 6 questions above but using a WITH statement instead of using a subquery
 -------------------- QUIZ 1 --------------------
+-- provide the name of the sales_rep in each region with the largest total_amt_sales
+WITH t1 AS (
+		SELECT s.name AS rep_name, 
+			   r.name AS region, 
+			   SUM(o.total_amt_usd) AS total_usd
+		FROM orders o
+		JOIN accounts a 
+		ON a.id = o.account_id
+		JOIN sales_reps s 
+		ON s.id = a.sales_rep_id
+		JOIN region r 
+		ON r.id = s.region_id
+		GROUP BY 1,2
+		ORDER BY 3 DESC),
+	 t2 AS (
+		SELECT region, MAX(total_usd) AS total_usd
+		FROM t1 
+		GROUP BY 1)
+SELECT t1.rep_name, t1.region, t1.total_usd
+FROM t1 
+JOIN t2 
+ON t1.region = t2.region AND t1.total_usd = t2.total_usd;
+
+
+-------------------- QUIZ 2 --------------------
+-- for the region with the largest(sum) of sales total_amt_usd, how many total(count) orders were placed?
+WITH t1 AS (
+		SELECT r.name AS region, SUM(o.total_amt_usd) AS total_usd
+		FROM orders o 
+		JOIN accounts a 
+		ON a.id = o.account_id
+		JOIN sales_reps s 
+		ON s.id = a.sales_rep_id 
+		JOIN region r 
+		ON r.id = s.region_id
+		GROUP BY 1
+		ORDER BY 2 DESC),
+	t2 AS (
+		SELECT r.name AS region, COUNT(o.total) AS total_orders
+		FROM orders o 
+		JOIN accounts a 
+		ON a.id = o.account_id
+		JOIN sales_reps s 
+		ON s.id = a.sales_rep_id 
+		JOIN region r 
+		ON r.id = s.region_id
+		GROUP BY 1
+		ORDER BY 2 DESC)
+SELECT t1.region AS region, t2.total_orders, MAX(t1.total_usd) AS total_usd
+FROM t1 
+JOIN t2 
+ON t1.region = t2.region 
+GROUP BY 1,2
+ORDER BY 3 DESC
+LIMIT 1;
+
+
+-------------------- QUIZ 3 --------------------
+-- how many accounts had more total purchases than the account name which has bought the most standard_qty throughout their lifetime?
+WITH t1 AS (
+		SELECT a.name AS name, SUM(o.standard_qty) AS top_standard_orders, SUM(o.total) AS total_orders
+		FROM orders o 
+		JOIN accounts a 
+		ON a.id = o.account_id 
+		GROUP BY 1 
+		ORDER BY 2 DESC 
+		LIMIT 1),
+
+	t2 AS ( 
+		SELECT a.name 
+		FROM orders o
+		JOIN accounts a 
+		ON a.id = o.account_id
+		GROUP BY 1
+		HAVING SUM(o.total) > (SELECT total_orders FROM t1))
+SELECT COUNT(*)
+FROM t2;
+
+
+-------------------- QUIZ 4 --------------------
+-- for the customer that spent the most (total over lifetime as customer) total_amt_usd,
+-- how many web_events did they have for each channel
+WITH t1 AS (
+		SELECT a.id AS id, a.name AS acc_name, SUM(o.total_amt_usd) AS total_usd
+		FROM orders o 
+		JOIN accounts a 
+		ON a.id = o.account_id
+		GROUP BY 1, 2
+		ORDER BY 3 DESC 
+		LIMIT 1)
+SELECT a.name, w.channel,COUNT(*)
+FROM accounts a 
+JOIN web_events w
+ON a.id = w.account_id AND a.name = (SELECT acc_name FROM t1)
+GROUP BY 1, 2 
+ORDER BY 3 DESC;
+
+
+-------------------- QUIZ 5 --------------------
+-- what is the lifetime avg amount spent (total_amt_usd) for the top 10 spending accounts?
+WITH t1 AS (
+		SELECT a.name, SUM(o.total_amt_usd) AS total_spent
+		FROM orders o 
+		JOIN accounts a 
+		ON a.id = o.account_id 
+		GROUP BY 1
+		ORDER BY 2 DESC
+		LIMIT 10)
+SELECT AVG(total_spent) AS avg_spent
+FROM t1;
+
+
+-------------------- QUIZ 6 --------------------
+-- what is the lifetime avg amount spent (total_amt_usd), 
+-- including only the companies that spent on average more per order than the average of all orders
+WITH t1 AS (
+   SELECT AVG(o.total_amt_usd) avg_all
+   FROM orders o
+   JOIN accounts a
+   ON a.id = o.account_id),
+t2 AS (
+   SELECT o.account_id, AVG(o.total_amt_usd) avg_amt
+   FROM orders o
+   GROUP BY 1
+   HAVING AVG(o.total_amt_usd) > (SELECT * FROM t1))
+SELECT AVG(avg_amt)
+FROM t2;
+
+
+
+
+
+
+
+
 
 
 
