@@ -77,7 +77,7 @@ STRPOS(city_state, ',')
 				   ---------- QUIZ TIME ----------
 -------------------- QUIZ 1 --------------------
 -- use the accounts table to create the first and last name columns that hold the first and last names for the primary_poc
-SELECT LEFT(primary_poc,(STRPOS(primary_poc, ' '))) AS first,
+SELECT LEFT(primary_poc, STRPOS(primary_poc, ' ')) AS first,
 	   RIGHT(primary_poc,LENGTH(primary_poc) - STRPOS(primary_poc, ' ')) AS last
 FROM accounts;
 
@@ -93,34 +93,86 @@ FROM sales_reps;
 
 
 
+SELECT LEFT(primary_poc, (STRPOS(primary_poc, ' ') -1)) AS first,
+	   RIGHT(primary_poc, LENGTH(primary_poc) - (STRPOS(primary_poc, ' '))) AS last
+FROM accounts;
+
+
+
+-------------------- CONCAT --------------------
+-- CONCAT is a way of adding two columns together
+-- you can either use CONCAT or || to do this
+
+-- E.G.
+SELECT first_name,
+	   last_name,
+	   CONCAT(first_name, ' ', last_name) AS full_name,
+	   first_name || ' ' || last_name AS full_name_alt
+FROM customer_data
+
+-- each of these will allow you to combine columsn together across rows
+
+CONCAT(first_name, ' ', last_name)
+----- OR -----
+first_name || ' ' || last_name
+
+
+				   ---------- QUIZ TIME ----------
+-------------------- QUIZ 1 --------------------
+-- each company in accounts wants to create an email address for each primary_poc
+-- the email address should be (first_name .last_name @ company_name . com)
+SELECT LEFT(primary_poc, STRPOS(primary_poc, ' ') -1)||'.'||
+	   RIGHT(primary_poc, LENGTH(primary_poc) - (STRPOS(primary_poc, ' ')))
+	   ||'@'||name||'.com' AS company_email
+FROM accounts;
+
+
+-------------------- QUIZ 2 --------------------
+-- some of the company names in the email addresses include spaces
+-- try and create email addresses by removing all the spaces from the company name
+SELECT LEFT(primary_poc, STRPOS(primary_poc, ' ') -1)||'.'||
+	   RIGHT(primary_poc, LENGTH(primary_poc) - (STRPOS(primary_poc, ' ')))
+	   ||'@'||REPLACE(name,' ', '')||'.com' AS company_email
+FROM accounts;
+
+
+/*
+-------------------- QUIZ 3 --------------------
+--- we would also like to create a passsword for each user, which they will change after the first log in
+--- first password will be .... 
+- first letter of primary_poc first name (lowercase) 
+- last letter of their first name (lowercase) 
+- first letter of their last name (lowercase)
+- last letter of their last name (lowercase)
+- the number of letters in their first name
+- the number of letters in the last name
+- then the name of their company they are working with, all capitalized with no spaces
+*/
+WITH t1 AS (
+	SELECT LEFT(primary_poc, (STRPOS(primary_poc, ' ') -1)) AS first,
+	   	   RIGHT(primary_poc, LENGTH(primary_poc) - (STRPOS(primary_poc, ' '))) AS last,
+	   	   name,
+	   	   primary_poc
+	FROM accounts
+	)
+SELECT t1.first AS first_name,
+	   t1.last AS last_name,
+	   LEFT(primary_poc, STRPOS(primary_poc, ' ') -1)||'.'||
+	   RIGHT(primary_poc, LENGTH(primary_poc) - (STRPOS(primary_poc, ' ')))
+	   ||'@'||REPLACE(name,' ', '')||'.com' AS company_email,
+	   LOWER(LEFT(t1.first, 1))|| 
+	   LOWER(RIGHT(t1.first, 1))||
+	   LOWER(LEFT(t1.last, 1))||
+	   LOWER(RIGHT(t1.last, 1))||
+	   LENGTH(t1.first)||
+	   LENGTH(t1.last)||
+	   UPPER(REPLACE(name,' ', '')) AS password
+FROM t1;
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-------------------- CAST --------------------
 
 
 
