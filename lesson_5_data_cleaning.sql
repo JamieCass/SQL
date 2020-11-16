@@ -1,4 +1,5 @@
 -------------------- SQL DATA CLEANING --------------------
+-- HELPFUL SITE (https://mode.com/sql-tutorial/sql-string-functions-for-cleaning/)
 -- Clean and re-structure messy data
 -- Convert columns to different data types
 -- Tricks for manipulating NULLS 
@@ -171,12 +172,129 @@ FROM t1;
 
 
 
-
 -------------------- CAST --------------------
+-- both 'CAST' and '::' allow for the converting of one data type to another
+--E.G.
+SELECT *, 
+	   DATE_PART('month', TO_DATE(month, 'month')) AS clean_month, -- change from 'January' to '1'
+	   year || '-' || DATE_PART('month', TO_DATE(month, 'month')) || '-' || day AS concatinated_date,
+	   CAST(year || '-' || DATE_PART('month', TO_DATE(month, 'month')) || '-' || day AS date) AS formatted_date, -- 'CAST' way to convert
+	   (year || '-' || DATE_PART('month', TO_DATE(month, 'month')) || '-' || day):: date AS formatted_date_alt -- '::' way to convert
+FROM ad_clicks;
+-- DATE_PART('month', TO_DATE(month'month')) here changed a month name into a number associated with that particular month
+-- then you change a sting to a date using CAST or :: 
+-- LEFT, RIGHT, TRIM are all used to select only certain elements of string, but using them to select elements of a number or date will treat them as strings for the purpose of the function
+-- TRIM can be used to remove characters from the beginning and end of a string, often used to remove white space from beginning or end of a row
+
+
+				   ---------- QUIZ TIME ----------
+-------------------- QUIZ 1 --------------------
+-- write a query to look at the top 10 rows to understand the columns and the raw data in the dataset (sf_crime_data)
+SELECT * 
+FROM sf_crime_data
+LIMIT 10;
+
+
+-------------------- QUIZ 2 --------------------
+-- whats the correct format of dates in SQL?
+-- yyyy-mm-dd
+
+
+-------------------- QUIZ 3 --------------------
+-- look at the date column, the date is not in the correct format 
+-- dd-mm-yyyy
+
+
+-------------------- QUIZ 4 --------------------
+-- write a query to change the date into the right SQL date format
+SELECT date AS original_date,
+	   SUBSTR(date, 7, 4)||'-'||LEFT(date, 2)||'-'||SUBSTR(date, 4, 2) AS new_date
+FROM sf_crime_data
+LIMIT 10;
+
+
+-------------------- QUIZ 5 --------------------
+-- once you have created column in the correct format, use either CAST or :: to conver to a date.
+SELECT date AS original_date,
+	   (SUBSTR(date, 7, 4)||'-'||LEFT(date, 2)||'-'||SUBSTR(date, 4, 2)):: DATE AS new_date
+FROM sf_crime_data
+LIMIT 10;
 
 
 
+-------------------- COALESCE --------------------
+-- COALESCE will return the first non-NULL value passed for each row
+-- it allows you to change the values from NULL to something of your choice
+-- E.G.
+SELECT * ,
+	   COALESCE(primary_poc, 'no POC') AS primary_poc_modified
+FROM accounts
+WHERE primary_poc IS NULL;
 
+
+				   ---------- QUIZ TIME ----------
+-------------------- QUIZ 1 --------------------
+-- use COALESCE to fill in the accounts.id column with the accounts.id for the NULL value
+SELECT COALESCE(a.id, a.id),
+	   a.name,
+	   a.website,
+	   a.lat,
+	   a.long,
+	   a.primary_poc,
+	   a.sales_rep_id,
+	   o.*
+FROM accounts a
+LEFT JOIN orders o
+ON a.id = o.account_id
+WHERE o.total IS NULL;
+
+
+-------------------- QUIZ 2 --------------------
+-- use COALESCE to fill in the orders.account_id column with the account.id for the NULL value
+SELECT COALESCE(a.id, a.id) AS new_id, a.name, a.website,
+	   a.lat, a.long, a.primary_poc, a.sales_rep_id,
+	   COALESCE(o.account_id, a.id) AS new_account_id, o.occurred_at, o.standard_qty,
+	   o.gloss_qty, o.poster_qty, o.total,
+	   o.standard_amt_usd, o.gloss_amt_usd, o.poster_amt_usd, o.total_amt_usd
+FROM accounts a
+LEFT JOIN orders o
+ON a.id = o.account_id
+WHERE o.total IS NULL;
+
+
+-------------------- QUIZ 3 --------------------
+-- use COALESCE to fill in each of the qty and usd columns with 0
+SELECT COALESCE(a.id, a.id) filled_id, a.name, a.website, 
+	   a.lat, a.long, a.primary_poc, a.sales_rep_id, 
+	   COALESCE(o.account_id, a.id) account_id, o.occurred_at, COALESCE(o.standard_qty, 0) standard_qty, 
+	   COALESCE(o.gloss_qty,0) gloss_qty, COALESCE(o.poster_qty,0) poster_qty, COALESCE(o.total,0) total, 
+	   COALESCE(o.standard_amt_usd,0) standard_amt_usd, COALESCE(o.gloss_amt_usd,0) gloss_amt_usd, COALESCE(o.poster_amt_usd,0) poster_amt_usd, 
+	   COALESCE(o.total_amt_usd,0) total_amt_usd
+FROM accounts a
+LEFT JOIN orders o
+ON a.id = o.account_id
+WHERE o.total IS NULL;
+
+
+-------------------- QUIZ 4 --------------------
+-- run the query with the WHERE removed and COUNT the number of ids
+SELECT COUNT(*)
+FROM accounts a
+LEFT JOIN orders o
+ON a.id = o.account_id;
+
+
+-------------------- QUIZ 5 --------------------
+-- run the query in 4 but with the COALESCE function used in 1-3
+SELECT COALESCE(a.id, a.id) filled_id, a.name, a.website, 
+	   a.lat, a.long, a.primary_poc, a.sales_rep_id, 
+	   COALESCE(o.account_id, a.id) account_id, o.occurred_at, COALESCE(o.standard_qty, 0) standard_qty, 
+	   COALESCE(o.gloss_qty,0) gloss_qty, COALESCE(o.poster_qty,0) poster_qty, COALESCE(o.total,0) total, 
+	   COALESCE(o.standard_amt_usd,0) standard_amt_usd, COALESCE(o.gloss_amt_usd,0) gloss_amt_usd, COALESCE(o.poster_amt_usd,0) poster_amt_usd, 
+	   COALESCE(o.total_amt_usd,0) total_amt_usd
+FROM accounts a
+LEFT JOIN orders o
+ON a.id = o.account_id;
 
 
 
