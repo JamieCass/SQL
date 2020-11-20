@@ -267,15 +267,75 @@ LIMIT 100;
 -- the higher the number in the explained result will be the one that takes the longest to run, so its better to refine the highest number if possible
 
 
+-------------------- JOINING SUBQUERIES --------------------
+-- ONE BIG QUERY
+SELECT DATE_TRUNC('day',o.occurred_at) AS date,
+	   COUNT(DISTINCT a.sales_rep_id) AS active_sales_reps, -- because we joined on DATE_TRUNC we have to use DISTINCT for all of these aggregations
+	   COUNT(DISTINCT o.id) AS orders,
+	   COUNT(DISTINCT we.id) AS web_visits
+FROM accounts a 
+JOIN orders o 
+ON o.account_id = a.id 
+JOIN web_events we
+ON DATE_TRUNC('day',we.occurred_at) = DATE_TRUNC('day',o.occurred_at) -- joining like this can results in a lot of rows
+GROUP BY 1 
+ORDER BY 1 DESC;
+
+-- BAD QUERY (79,000 rows!!!!)
+SELECT o.occurred_at AS date,
+	   a.sales_rep_id, 
+	   o.id AS order_id,
+	   we.id AS web_event_id
+FROM accounts a 
+JOIN orders o 
+ON o.account_id = a.id 
+JOIN web_events we
+ON DATE_TRUNC('day',we.occurred_at) = DATE_TRUNC('day',o.occurred_at)
+ORDER BY 1 DESC;
 
 
+-- FIRST SUBQUERY
+SELECT DATE_TRUNC('day',o.occurred_at) AS date,
+	   COUNT(DISTINCT a.sales_rep_id) AS active_sales_reps, -- because we joined on DATE_TRUNC we have to use DISTINCT for all of these aggregations
+	   COUNT(DISTINCT o.id) AS orders,
+FROM accounts a 
+JOIN orders o 
+ON o.account_id = a.id 
+GROUP BY 1;
 
+-- SECOND SUBQUERY
+SELECT DATE_TRUNC('day',w.occurred_at) AS date,
+	   COUNT(DISTINCT we.id) AS web_visits
+FROM web_events we 
+GROUP BY 1;
 
+-- FULL QUERY USING THE SUBQUERIES
+SELECT COALESCE(orders.date, web_events.date) AS date,
+	   orders.active_sales_reps,
+	   orders.orders,
+	   web_events.web_visits
+FROM 
+(
+	SELECT DATE_TRUNC('day',o.occurred_at) AS date,
+		   COUNT(DISTINCT a.sales_rep_id) AS active_sales_reps, -- because we joined on DATE_TRUNC we have to use DISTINCT for all of these aggregations
+		   COUNT(DISTINCT o.id) AS orders
+	FROM accounts a 
+	JOIN orders o 
+	ON o.account_id = a.id 
+	GROUP BY 1
+) orders
 
+FULL JOIN -- we use a full JOIN to see if there are any rows where one columns had data and the other doesnt (and there are)
 
+(	
+	SELECT DATE_TRUNC('day',we.occurred_at) AS date,
+		   COUNT(DISTINCT we.id) AS web_visits
+	FROM web_events we 
+	GROUP BY 1
+) web_events
 
-
-
+ON web_events.date = orders.date
+ORDER BY 1 DESC;
 
 
 
