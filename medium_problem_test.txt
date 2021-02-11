@@ -1,0 +1,24 @@
+
+hackers table - h
+	hacker_id 
+	name
+
+difficulty table - d
+	difficulty_level
+	score
+
+challenges table - c
+	challenge_id
+	hacker_id
+	difficulty_level
+
+submissions table - s
+	submission_id
+	hacker_id
+	challenge_id
+	score
+
+
+
+SELECT h.hacker_id, h.name
+FROM 

@@ -1,0 +1,53 @@
+EASY QUESTIONS
+
+1. https://www.hackerrank.com/challenges/weather-observation-station-5/problem
+
+SELECT city, LENGTH(CITY) 
+FROM station
+ORDER BY LENGTH(CITY) DESC, CITY
+LIMIT 1;
+SELECT city, LENGTH(CITY) 
+FROM station
+ORDER BY LENGTH(CITY), CITY
+limit 1;
+
+
+2. https://www.hackerrank.com/challenges/weather-observation-station-6/problem
+
+SELECT DISTINCT CITY
+FROM STATION
+WHERE SUBSTRING(CITY,1,1) IN ('A','E','I','O','U');
+
+
+3. https://www.hackerrank.com/challenges/more-than-75-marks/problem?h_r=next-challenge&h_v=zen&h_r=next-challenge&h_v=zen&h_r=next-challenge&h_v=zen&h_r=next-challenge&h_v=zen&h_r=next-challenge&h_v=zen&h_r=next-challenge&h_v=zen&h_r=next-challenge&h_v=zen
+
+SELECT NAME
+FROM STUDENTS
+WHERE MARKS > '75'
+ORDER BY SUBSTRING(NAME,-3), ID;
+
+
+4. https://www.hackerrank.com/challenges/salary-of-employees/problem
+
+SELECT name
+FROM Employee
+WHERE months < 10 AND salary > 2000
+ORDER BY employee_id;
+
+
+MEDIUM QUESTIONS
+
+1. https://www.hackerrank.com/challenges/the-report/problem
+SELECT CASE WHEN g.Grade < 8 THEN s.Name = NULL 
+       ELSE s.NAME END AS NULL_NOT, 
+       g.Grade, 
+       s.Marks
+FROM Students s
+JOIN Grades g ON s.Marks BETWEEN g.MIN_MARK AND g.MAX_MARK
+ORDER BY g.Grade DESC, s.Name;
+
+
+
+
+
+
