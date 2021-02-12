@@ -38,6 +38,7 @@ ORDER BY employee_id;
 MEDIUM QUESTIONS
 
 1. https://www.hackerrank.com/challenges/the-report/problem
+
 SELECT CASE WHEN g.Grade < 8 THEN s.Name = NULL 
        ELSE s.NAME END AS NULL_NOT, 
        g.Grade, 
@@ -45,6 +46,24 @@ SELECT CASE WHEN g.Grade < 8 THEN s.Name = NULL
 FROM Students s
 JOIN Grades g ON s.Marks BETWEEN g.MIN_MARK AND g.MAX_MARK
 ORDER BY g.Grade DESC, s.Name;
+
+
+2. https://www.hackerrank.com/challenges/full-score/problem?h_r=next-challenge&h_v=zen
+
+SELECT T2.id, T2.name
+FROM (
+    SELECT SUM(T1.tally) AS tally_sum, T1.hacker_id AS id, T1.name AS name
+    FROM (
+        SELECT h.hacker_id AS hacker_id , h.name AS name,
+        CASE WHEN s.score = d.score THEN 1 ELSE 0 END AS tally
+        FROM hackers h 
+        JOIN submissions s ON h.hacker_id = s.hacker_id
+        JOIN challenges c ON c.challenge_id = s.challenge_id
+        JOIN difficulty d ON d.difficulty_level = c.difficulty_level)  AS T1
+    GROUP BY 2, 3
+    HAVING SUM(T1.tally) > 1) AS T2
+ORDER BY T2.tally_sum DESC, 1;
+
 
 
 
