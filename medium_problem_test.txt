@@ -1,7 +1,7 @@
+1.
 Print respective hacker_id and name of hackers who achieved full scores for more than one challenge
 Order output in desc order by total number of challenges the hacker earned full score
 If more than one received full scores in same number of challenges sort by ascending hacker_id
-
 
 
 hackers table - h
@@ -36,6 +36,37 @@ FROM (
     GROUP BY 2, 3
     HAVING SUM(T1.tally) > 1) AS T2
 ORDER BY T2.tally_sum DESC, 1;
+
+
+
+
+2. 
+Print the id, age, coins_needed and power of the wands that Ron's interested in (non-evil).
+Sort in order of descending power. If more than one wand has the same power, sort in order of descending age.
+
+
+wands table - w
+	id
+	code
+	coins_needed
+	power
+
+wandss_property table - wp
+	code
+	age
+	is_evil 
+
+SELECT w.id, wp.age, MIN(w.coins_needed), w.power
+FROM wands w
+JOIN wands_property wp ON wp.code = w.code
+WHERE wp.is_evil = 0
+GROUP BY 1,2,4
+ORDER BY w.power, wp.age DESC; 
+
+
+
+
+
 
 
 
