@@ -65,8 +65,20 @@ FROM (
 ORDER BY T2.tally_sum DESC, 1;
 
 
+3. https://www.hackerrank.com/challenges/harry-potter-and-wands/problem
+
+SELECT w.id, t1.age, t1.min_coins, t1.power
+FROM (
+    SELECT wp.age, MIN(w.coins_needed) AS min_coins, w.power, w.code
+    FROM wands w
+    JOIN wands_property wp ON wp.code = w.code
+    WHERE wp.is_evil = 0 
+    GROUP BY 1,3,4) AS t1
+JOIN wands w ON w.code = t1.code AND w.coins_needed = t1.min_coins AND w.power = t1.power
+ORDER BY t1.power DESC, t1.age DESC, t1.min_coins; 
 
 
+4. 
 
 
 
